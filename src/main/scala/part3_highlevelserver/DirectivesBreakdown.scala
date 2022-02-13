@@ -95,5 +95,107 @@ object DirectivesBreakdown extends App {
       }
     }
 
-  Http().bindAndHandle(extractRequestRoute, "localhost", 8080)
+  // Http().bindAndHandle(extractRequestRoute, "localhost", 8080)
+
+  /*
+  * Type 3: Composite directives
+  */
+
+  val simpleNestedRoute =
+    path("api" / "item") {
+      get {
+        complete(StatusCodes.OK)
+      }
+    }
+
+  // can be rewritten more concisely as
+  // composite filtering directives - must match both conditions
+  val compactSimpleNestedRoute = (path("api" / "item") & get) {
+    complete(StatusCodes.OK)
+  }
+
+  // you can also include extraction directives
+  val compactExtractRequestRoute =
+    (path("controlEndpoint") & extractRequest & extractLog) { (request, log) =>
+      log.info(s"I got the http request: $request")
+      complete(StatusCodes.OK)
+    }
+
+  // you can group similar directives under a common directive
+  // /about and /aboutUs
+  val repeatedRoute =
+    path("about") {
+      complete(StatusCodes.OK)
+    } ~
+      path("aboutUs") {
+        complete(StatusCodes.OK)
+      }
+
+  // you can concisely group these using |
+  val dryRoute =
+    (path("about") | path("aboutUs")) {
+      complete(StatusCodes.OK)
+    }
+
+  // you can also use OR on extraction directives but only under certain conditions
+  // yourblog.com/42 AND yourblog.com?postId=42
+
+  val blogByIdRoute =
+    path(IntNumber) { (blogpostId: Int) =>
+      // do some server logic
+      complete(StatusCodes.OK)
+    }
+
+  val blogByQueryParamRoute =
+    parameter('postId.as[Int]) { (blogpostId: Int) =>
+      // the same server logic
+      complete(StatusCodes.OK)
+    }
+
+  // extracts either depending on shape of URI
+  // must extract same kind and number of values
+  val combinedBlogByIdRoute =
+    (path(IntNumber) | parameter('postId.as[Int])) { (blogpostId: Int) =>
+      // your original server logic
+      complete(StatusCodes.OK)
+    }
+
+  /*
+  * Type 4: "Actionable" Directives
+  */
+  // the complete directive takes an argument of ToResponseMarshallable - anything that can become a http response
+  val completeOkRoute = complete(StatusCodes.OK)
+
+  // failWith takes an exception and produces a 500 status code
+  val failedRoute =
+    path("notSupported") {
+      failWith(new RuntimeException("Unsupported")) // completes with HTTP 500 status code
+    }
+
+  // reject hands over a request to the next possible handler in the routing tree
+  // rejection happens automatically when a request doesn't match a directive
+  val routeWithRejection = {
+//    path("home") {
+//      reject
+//    } ~
+    path("index") {
+      completeOkRoute
+    }
+  }
+
+  /*
+   * Exercise
+   */
+  val getOrPutPath = {
+  path("api" / "myEndpoint") {
+    get {
+      completeOkRoute
+    } ~ // don't forget the ~ !!!
+      post {
+        complete(StatusCodes.Forbidden)
+      }
+  }
+
+  Http().bindAndHandle(getOrPutPath, "localhost", 8081)
+  }
 }
