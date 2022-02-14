@@ -196,6 +196,6 @@ object DirectivesBreakdown extends App {
       }
   }
 
-  Http().bindAndHandle(getOrPutPath, "localhost", 8081)
+  // Http().bindAndHandle(getOrPutPath, "localhost", 8081)
   }
 }
