@@ -62,7 +62,11 @@ trait PlayerJsonProtocol extends DefaultJsonProtocol {
   implicit val playerFormat = jsonFormat3(Player)
 }
 
-object MarshallingJSON extends App with PlayerJsonProtocol with SprayJsonSupport {
+object MarshallingJSON extends App
+  // step 3
+  with PlayerJsonProtocol
+  // step 4
+  with SprayJsonSupport {
   implicit val system = ActorSystem("MarshallingJSON")
   implicit val materializer = ActorMaterializer()
 
